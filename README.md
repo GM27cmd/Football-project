@@ -24,3 +24,9 @@ Football League Manager
 работи директно с Python
 подходяща е за учебни проекти
 лесна е за пренасяне и качване в GitHub
+
+Oсновни обекти (таблици)
+
+Clubs
+Players
+Matches
