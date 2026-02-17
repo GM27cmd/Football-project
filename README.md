@@ -30,3 +30,10 @@ Oсновни обекти (таблици)
 Clubs
 Players
 Matches
+Trаnsfers
+Leagues 
+League_Teams 
+Goals 
+Cards 
+
+
