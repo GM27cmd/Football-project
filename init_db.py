@@ -9,12 +9,12 @@ def initialize_database():
     cursor.execute("PRAGMA foreign_keys = ON;")
 
     # Прочитаме schema.sql и създаваме таблиците
-    with open("schema.sql", "r", encoding="utf-8") as f:
+    with open("sql/schema.sql", "r", encoding="utf-8") as f:
         schema_sql = f.read()
         cursor.executescript(schema_sql)
 
     # Прочитаме test_data.sql и добавяме тестовите данни
-    with open("test_data.sql", "r", encoding="utf-8") as f:
+    with open("sql/test_data.sql", "r", encoding="utf-8") as f:
         test_data_sql = f.read()
         cursor.executescript(test_data_sql)
 
