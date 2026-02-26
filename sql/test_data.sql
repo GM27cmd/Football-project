@@ -18,11 +18,12 @@ INSERT INTO League_Teams (league_id, club_id, season) VALUES
 (2, 4, '2025/2026');
 
 -- Players
-INSERT INTO Players (first_name, last_name, position, age, club_id, nationality) VALUES
-('Marcus', 'Rashford', 'Forward', 26, 1, 'ENG'),
-('Mohamed', 'Salah', 'Forward', 30, 2, 'EGY'),
-('Karim', 'Benzema', 'Forward', 35, 3, 'FRA'),
-('Robert', 'Lewandowski', 'Forward', 35, 4, 'POL');
+INSERT INTO players 
+(full_name, birth_date, nationality, position, number, status, club_id)
+VALUES
+('Иван Петров', '2000-05-10', 'България', 'FW', 9, 'active', 1),
+('Георги Стоянов', '1998-03-21', 'България', 'MF', 8, 'active', 1),
+('Martin Ivanov', '2002-07-15', 'България', 'GK', 1, 'active', 2);
 
 -- Transfers
 INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee) VALUES
