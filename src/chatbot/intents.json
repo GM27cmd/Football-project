@@ -37,6 +37,18 @@
         "край"
       ],
       "description": "Затваря програмата"
-    }
+    },
+"add_player": {
+  "patterns": ["добави играч"]
+},
+"list_players": {
+  "patterns": ["покажи играчи на"]
+},
+"update_player_number": {
+  "patterns": ["смени номер на"]
+},
+"delete_player": {
+  "patterns": ["изтрий играч"]
+}
   }
   
