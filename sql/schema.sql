@@ -25,18 +25,18 @@ CREATE TABLE League_Teams (
     FOREIGN KEY (club_id) REFERENCES Clubs(club_id)
 );
 
-CREATE TABLE players (
+CREATE TABLE Players (
     player_id INTEGER PRIMARY KEY AUTOINCREMENT,
     full_name TEXT NOT NULL,
-    birth_date TEXT NOT NULL,  
+    birth_date TEXT NOT NULL,
     nationality TEXT NOT NULL,
     position TEXT NOT NULL CHECK(position IN ('GK', 'DF', 'MF', 'FW')),
     number INTEGER NOT NULL CHECK(number BETWEEN 1 AND 99),
     status TEXT NOT NULL DEFAULT 'active',
     club_id INTEGER NOT NULL,
-    FOREIGN KEY (club_id) REFERENCES clubs(club_id)
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
     UNIQUE(club_id, number)
 );
 
