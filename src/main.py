@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Fix path BEFORE imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from src.chatbot.nlu import detect_intent
 from src.chatbot.router import route_intent
 from src.utils.logger import log_command
