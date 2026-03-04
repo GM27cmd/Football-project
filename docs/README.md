@@ -19,3 +19,13 @@ Football League Manager Описание на проекта
 Oсновни обекти (таблици)
 
 Clubs Players Matches Trаnsfers Leagues League_Teams Goals Cards
+
+User Input
+↓
+NLU Regex parsing
+↓
+Router
+↓
+Service layer
+↓
+Database
