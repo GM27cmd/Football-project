@@ -1,29 +1,33 @@
 import sqlite3
 import os
 
-DB_NAME = "football.db"
+DB_FILE = "football.db"
+SQL_FOLDER = "sql"
+
 
 def initialize_database():
+    schema_path = os.path.join(SQL_FOLDER, "schema.sql")
+    test_data_path = os.path.join(SQL_FOLDER, "test_data.sql")
 
-    conn = sqlite3.connect(DB_NAME)
+    if os.path.exists(DB_FILE):
+        os.remove(DB_FILE)
+
+    conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # ===== LOAD SCHEMA =====
-    with open("sql/schema.sql", "r", encoding="utf-8") as f:
+    # Schema
+    with open(schema_path, "r", encoding="utf-8") as f:
         schema_sql = f.read()
-
     cursor.executescript(schema_sql)
 
-    # ===== LOAD TEST DATA =====
-    with open("sql/test_data.sql", "r", encoding="utf-8") as f:
+    # Test data
+    with open(test_data_path, "r", encoding="utf-8") as f:
         test_data_sql = f.read()
-
     cursor.executescript(test_data_sql)
 
     conn.commit()
     conn.close()
-
-    print("Database initialized successfully.")
+    print("Database initialized successfully!")
 
 
 if __name__ == "__main__":
