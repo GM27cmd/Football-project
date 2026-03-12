@@ -1,13 +1,13 @@
 import os
 import sys
 
-# Fix path BEFORE imports
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# ===== FIX IMPORTS =====
+# Добавяме src папката в sys.path, за да работят локалните импорти
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from src.chatbot.nlu import detect_intent
-from src.chatbot.router import route_intent
-from src.utils.logger import log_command
-
+from chatbot.nlu import detect_intent
+from chatbot.router import route_intent
+from utils.logger import log_command
 
 def main():
     print("⚽ Football Database Chatbot")
@@ -15,7 +15,6 @@ def main():
 
     while True:
         user_input = input("\n> ")
-
         intent = detect_intent(user_input)
         response = route_intent(intent, user_input)
 
@@ -25,7 +24,6 @@ def main():
 
         print(response)
         log_command(user_input, intent, response)
-
 
 if __name__ == "__main__":
     main()
