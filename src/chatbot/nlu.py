@@ -1,22 +1,20 @@
+import re
 import json
 import os
 
-
-INTENTS_FILE = os.path.join(os.path.dirname(__file__), "intents.json")
-
-
-def load_intents():
-    with open(INTENTS_FILE, "r", encoding="utf-8") as file:
-        return json.load(file)
-
+# Зареждаме intents.json
+intents_file = os.path.join(os.path.dirname(__file__), "intents.json")
+with open(intents_file, encoding="utf-8") as f:
+    intents_data = json.load(f)
 
 def detect_intent(user_input):
-    user_input = user_input.lower()
-    intents = load_intents()
+    user_input = user_input.strip().lower()
 
-    for intent, data in intents.items():
-        for pattern in data["patterns"]:
-            if pattern in user_input:
-                return intent
+    # Проверка спрямо intents.json regex
+    for intent_item in intents_data:
+        pattern = intent_item.get("regex", "")
+        if pattern and re.search(pattern, user_input, re.IGNORECASE):
+            return intent_item["tag"]
 
+    # Ако няма съвпадение
     return "unknown"
