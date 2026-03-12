@@ -1,20 +1,22 @@
 import sqlite3
+import os
 
-DB_NAME = "football.db"
+DB_FILE = os.path.join(os.path.dirname(__file__), "../../football.db")
+
+
+def get_connection():
+    conn = sqlite3.connect(DB_FILE)
+    conn.execute("PRAGMA foreign_keys = ON;")
+    return conn
 
 
 def execute_query(query, params=(), fetch=False):
-    connection = sqlite3.connect(DB_NAME)
-    cursor = connection.cursor()
-
-    cursor.execute(query, params)
-
-    if fetch:
-        result = cursor.fetchall()
-    else:
-        result = None
-
-    connection.commit()
-    connection.close()
-
-    return result
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(query, params)
+        conn.commit()
+        if fetch:
+            return cursor.fetchall()
+    finally:
+        conn.close()
