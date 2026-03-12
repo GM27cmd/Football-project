@@ -1,5 +1,4 @@
 import re
-
 from src.services.clubs_service import add_club, get_all_clubs, delete_club
 from src.services.players_service import (
     add_player,
@@ -8,82 +7,65 @@ from src.services.players_service import (
     delete_player
 )
 
-
 def route_intent(intent, user_input):
-
-    user_input = user_input.lower()
+    user_input = user_input.strip()
 
     # ===============================
     # CLUBS MODULE
     # ===============================
-
     if intent == "add_club":
-        match = re.search(r"добави клуб (.+)", user_input)
+        match = re.search(r"добави клуб\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return add_club(match.group(1))
-
+            return add_club(match.group(1).strip())
 
     if intent == "list_clubs":
         return get_all_clubs()
 
-
     if intent == "delete_club":
-        match = re.search(r"изтрий клуб (.+)", user_input)
+        match = re.search(r"изтрий клуб\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return delete_club(match.group(1))
-
+            return delete_club(match.group(1).strip())
 
     # ===============================
     # PLAYERS MODULE
     # ===============================
-
     # Добави играч
     if intent == "add_player":
         match = re.search(
-            r"добави играч (.+) в (.+) позиция (GK|DF|MF|FW) номер (\d+) роден (\d{4}-\d{2}-\d{2}) националност (.+)",
+            r"добави играч\s+(.+?)\s+в\s+(.+?)\s+позиция\s+(GK|DF|MF|FW)\s+номер\s+(\d+)\s+роден\s+(\d{4}-\d{2}-\d{2})\s+националност\s+(.+)",
             user_input,
             re.IGNORECASE
         )
-
         if match:
-            return add_player(
-                match.group(1),
-                match.group(5),
-                match.group(6),
-                match.group(3),
-                int(match.group(4)),
-                match.group(2)
-            )
-
+            full_name = match.group(1).strip()
+            club_name = match.group(2).strip()
+            position = match.group(3).upper()
+            number = int(match.group(4))
+            birth_date = match.group(5).strip()
+            nationality = match.group(6).strip()
+            return add_player(full_name, birth_date, nationality, position, number, club_name)
 
     # Покажи играчи по клуб
     if intent == "list_players":
-        match = re.search(r"покажи играчи на (.+)", user_input)
+        match = re.search(r"покажи играчи на\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return list_players_by_club(match.group(1))
-
+            return list_players_by_club(match.group(1).strip())
 
     # Смени номер
     if intent == "update_player_number":
-        match = re.search(r"смени номер на (.+) на (\d+)", user_input)
+        match = re.search(r"смени номер на\s+(.+?)\s+на\s+(\d+)", user_input, re.IGNORECASE)
         if match:
-            return update_player_number(
-                match.group(1),
-                int(match.group(2))
-            )
-
+            return update_player_number(match.group(1).strip(), int(match.group(2)))
 
     # Изтрий играч
     if intent == "delete_player":
-        match = re.search(r"изтрий играч (.+)", user_input)
+        match = re.search(r"изтрий играч\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return delete_player(match.group(1))
-
+            return delete_player(match.group(1).strip())
 
     # ===============================
     # HELP / SYSTEM
     # ===============================
-
     if intent == "help":
         return """
 Команди:
@@ -104,9 +86,7 @@ def route_intent(intent, user_input):
 - изход
 """
 
-
     if intent == "exit":
         return "exit"
-
 
     return "❌ Не разбирам командата."
