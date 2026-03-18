@@ -1,48 +1,42 @@
--- Leagues
-INSERT INTO Leagues (name, country, level) VALUES
-('Premier League', 'England', 1),
-('La Liga', 'Spain', 1);
-
--- Clubs (сега подаваме founded_year и league_id)
+-- =========================
+-- Клубове
+-- =========================
 INSERT INTO Clubs (name, city, founded_year, league_id) VALUES
-('Левски', 'София', 1914, 1),
-('Лудогорец', 'Разград', 2001, 1),
-('Ботев', 'Пловдив', 1912, 2),
-('ЦСКА', 'София', 1948, 2);
+('Левски', 'София', 1914, NULL),
+('ЦСКА', 'София', 1948, NULL),
+('Лудогорец', 'Разград', 2001, NULL),
+('Ботев', 'Пловдив', 1912, NULL);
 
--- League_Teams
-INSERT INTO League_Teams (league_id, club_id, season) VALUES
-(1, 1, '2025/2026'),
-(1, 2, '2025/2026'),
-(2, 3, '2025/2026'),
-(2, 4, '2025/2026');
+-- =========================
+-- Играч
+-- =========================
+INSERT INTO Players (full_name, birth_date, nationality, position, number, status, club_id) VALUES
+('Иван Петров', '2000-01-01', 'България', 'FW', 9, 'active', 1),
+('Георги Иванов', '1999-05-05', 'България', 'MF', 8, 'active', 1),
+('Петър Георгиев', '2001-02-02', 'България', 'DF', 4, 'active', 2),
+('Мартин Стоянов', '1998-03-03', 'България', 'MF', 6, 'active', 3),
+('Александър Иванов', '2002-04-04', 'България', 'FW', 10, 'active', 4),
+('Никола Димов', '2001-06-06', 'България', 'GK', 1, 'active', 2);
 
--- Players
-INSERT INTO Players
-(full_name, birth_date, nationality, position, number, status, club_id)
-VALUES
-('Иван Петров', '2000-05-10', 'България', 'FW', 9, 'active', 1),
-('Георги Стоянов', '1998-03-21', 'България', 'MF', 8, 'active', 1),
-('Martin Ivanov', '2002-07-15', 'България', 'GK', 1, 'active', 2);
+-- =========================
+-- Примерни трансфери
+-- =========================
+-- Иван Петров: Левски → Лудогорец
+INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee, note) VALUES
+(1, 1, 3, '2025-01-15', 30000, 'Прехвърлен за нов сезон');
 
--- Transfers (поправен player_id)
-INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee) VALUES
-(1, 2, 1, '2023-07-01', 100000000),
-(2, 3, 1, '2022-08-15', 50000000);
+-- Георги Иванов: ЦСКА → Левски
+INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee, note) VALUES
+(2, 2, 1, '2025-02-20', 50000, 'Междуклубен трансфер');
 
--- Matches
-INSERT INTO Matches (home_club_id, away_club_id, home_goals, away_goals, match_date, league_id) VALUES
-(1, 2, 2, 1, '2026-02-20', 1),
-(3, 4, 3, 2, '2026-02-21', 2);
+-- Петър Георгиев: Ботев → ЦСКА
+INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee, note) VALUES
+(3, 4, 2, '2025-03-10', 25000, NULL);
 
--- Goals (поправен player_id 4 -> 2)
-INSERT INTO Goals (match_id, player_id, minute, type) VALUES
-(1, 1, 15, 'Regular'),
-(1, 2, 45, 'Regular'),
-(2, 3, 10, 'Regular');
+-- Мартин Стоянов: свободен агент → Лудогорец
+INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee, note) VALUES
+(4, NULL, 3, '2025-04-05', 0, 'Свободен агент');
 
--- Cards
-INSERT INTO Cards (match_id, player_id, type, minute) VALUES
-(1, 1, 'Yellow', 30),
-(1, 2, 'Red', 70),
-(2, 3, 'Yellow', 50);
+-- Александър Иванов: Ботев → Левски
+INSERT INTO Transfers (player_id, from_club_id, to_club_id, transfer_date, fee, note) VALUES
+(5, 4, 1, '2025-05-12', 40000, 'Летен трансфер');
