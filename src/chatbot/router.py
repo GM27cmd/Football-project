@@ -6,6 +6,12 @@ from src.services.players_service import (
     update_player_number,
     delete_player
 )
+from src.services.transfers_service import (
+    transfer_player,
+    list_transfers_by_player,
+    list_transfers_by_club
+)
+from src.utils.logger import log_command
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
@@ -16,20 +22,25 @@ def route_intent(intent, user_input):
     if intent == "add_club":
         match = re.search(r"добави клуб\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return add_club(match.group(1).strip())
+            result = add_club(match.group(1).strip())
+            log_command(user_input, intent, params={"club": match.group(1).strip()}, result=result)
+            return result
 
     if intent == "list_clubs":
-        return get_all_clubs()
+        result = get_all_clubs()
+        log_command(user_input, intent, result=result)
+        return result
 
     if intent == "delete_club":
         match = re.search(r"изтрий клуб\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return delete_club(match.group(1).strip())
+            result = delete_club(match.group(1).strip())
+            log_command(user_input, intent, params={"club": match.group(1).strip()}, result=result)
+            return result
 
     # ===============================
     # PLAYERS MODULE
     # ===============================
-    # Добави играч
     if intent == "add_player":
         match = re.search(
             r"добави играч\s+(.+?)\s+в\s+(.+?)\s+позиция\s+(GK|DF|MF|FW)\s+номер\s+(\d+)\s+роден\s+(\d{4}-\d{2}-\d{2})\s+националност\s+(.+)",
@@ -43,25 +54,75 @@ def route_intent(intent, user_input):
             number = int(match.group(4))
             birth_date = match.group(5).strip()
             nationality = match.group(6).strip()
-            return add_player(full_name, birth_date, nationality, position, number, club_name)
+            result = add_player(full_name, birth_date, nationality, position, number, club_name)
+            log_command(user_input, intent, params={"player": full_name, "club": club_name}, result=result)
+            return result
 
-    # Покажи играчи по клуб
     if intent == "list_players":
         match = re.search(r"покажи играчи на\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return list_players_by_club(match.group(1).strip())
+            club_name = match.group(1).strip()
+            result = list_players_by_club(club_name)
+            log_command(user_input, intent, params={"club": club_name}, result=result)
+            return result
 
-    # Смени номер
     if intent == "update_player_number":
         match = re.search(r"смени номер на\s+(.+?)\s+на\s+(\d+)", user_input, re.IGNORECASE)
         if match:
-            return update_player_number(match.group(1).strip(), int(match.group(2)))
+            player_name = match.group(1).strip()
+            new_number = int(match.group(2))
+            result = update_player_number(player_name, new_number)
+            log_command(user_input, intent, params={"player": player_name, "number": new_number}, result=result)
+            return result
 
-    # Изтрий играч
     if intent == "delete_player":
         match = re.search(r"изтрий играч\s+(.+)", user_input, re.IGNORECASE)
         if match:
-            return delete_player(match.group(1).strip())
+            player_name = match.group(1).strip()
+            result = delete_player(player_name)
+            log_command(user_input, intent, params={"player": player_name}, result=result)
+            return result
+
+    # ===============================
+    # TRANSFERS MODULE
+    # ===============================
+    if intent == "transfer_player":
+        match = re.search(
+            r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?",
+            user_input,
+            re.IGNORECASE
+        )
+        if match:
+            player_name = match.group(1).strip()
+            from_club = match.group(2).strip()
+            to_club = match.group(3).strip()
+            date = match.group(4)
+            fee = float(match.group(6)) if match.group(6) else None
+            result = transfer_player(player_name, from_club, to_club, date, fee)
+            log_command(user_input, intent,
+                        params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee},
+                        result=result)
+            return result
+        else:
+            result = "❌ Грешен формат на трансфер. Пример: Трансфер Иван Петров от Левски в Лудогорец 2026-03-10"
+            log_command(user_input, intent, result=result)
+            return result
+
+    if intent == "show_transfers_player":
+        match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
+        if match:
+            player_name = match.group(1).strip()
+            result = list_transfers_by_player(player_name)
+            log_command(user_input, intent, params={"player": player_name}, result=result)
+            return result
+
+    if intent == "show_transfers_club":
+        match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
+        if match:
+            club_name = match.group(1).strip()
+            result = list_transfers_by_club(club_name)
+            log_command(user_input, intent, params={"club": club_name}, result=result)
+            return result
 
     # ===============================
     # HELP / SYSTEM
@@ -80,6 +141,12 @@ def route_intent(intent, user_input):
 - Покажи играчи на Левски
 - Смени номер на Иван Петров на 10
 - Изтрий играч Иван Петров
+
+Трансфери:
+- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10
+- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10 сума 50000
+- Покажи трансфери на Иван Петров
+- Покажи трансфери на Левски
 
 Система:
 - помощ
