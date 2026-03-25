@@ -1,24 +1,23 @@
+# src/chatbot/router.py
 import re
-from src.services.clubs_service import add_club, get_all_clubs, delete_club
-from src.services.players_service import (
+from services.clubs_service import add_club, get_all_clubs, delete_club
+from services.players_service import (
     add_player,
     list_players_by_club,
     update_player_number,
     delete_player
 )
-from src.services.transfers_service import (
+from services.transfers_service import (
     transfer_player,
     list_transfers_by_player,
     list_transfers_by_club
 )
-from src.utils.logger import log_command
+from utils.logger import log_command
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
 
-    # ===============================
-    # CLUBS MODULE
-    # ===============================
+    # --- CLUBS ---
     if intent == "add_club":
         match = re.search(r"добави клуб\s+(.+)", user_input, re.IGNORECASE)
         if match:
@@ -38,9 +37,7 @@ def route_intent(intent, user_input):
             log_command(user_input, intent, params={"club": match.group(1).strip()}, result=result)
             return result
 
-    # ===============================
-    # PLAYERS MODULE
-    # ===============================
+    # --- PLAYERS ---
     if intent == "add_player":
         match = re.search(
             r"добави играч\s+(.+?)\s+в\s+(.+?)\s+позиция\s+(GK|DF|MF|FW)\s+номер\s+(\d+)\s+роден\s+(\d{4}-\d{2}-\d{2})\s+националност\s+(.+)",
@@ -83,30 +80,25 @@ def route_intent(intent, user_input):
             log_command(user_input, intent, params={"player": player_name}, result=result)
             return result
 
-    # ===============================
-    # TRANSFERS MODULE
-    # ===============================
+    # --- TRANSFERS ---
     if intent == "transfer_player":
-        match = re.search(
-            r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?",
-            user_input,
-            re.IGNORECASE
-        )
-        if match:
-            player_name = match.group(1).strip()
-            from_club = match.group(2).strip()
-            to_club = match.group(3).strip()
-            date = match.group(4)
-            fee = float(match.group(6)) if match.group(6) else None
-            result = transfer_player(player_name, from_club, to_club, date, fee)
-            log_command(user_input, intent,
-                        params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee},
-                        result=result)
-            return result
-        else:
-            result = "❌ Грешен формат на трансфер. Пример: Трансфер Иван Петров от Левски в Лудогорец 2026-03-10"
-            log_command(user_input, intent, result=result)
-            return result
+       match = re.search(
+           r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?(\s+забележка\s+(.+))?",
+           user_input,
+           re.IGNORECASE
+        )    
+    if match:
+        player_name = match.group(1).strip()
+        from_club = match.group(2).strip()
+        to_club = match.group(3).strip()
+        date = match.group(4)
+        fee = float(match.group(6)) if match.group(6) else None
+        note = match.group(8).strip() if match.group(8) else None
+        result = transfer_player(player_name, from_club, to_club, date, fee, note)
+        log_command(user_input, intent,
+                    params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee, "note": note},
+                    result=result)
+        return result
 
     if intent == "show_transfers_player":
         match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
@@ -124,9 +116,7 @@ def route_intent(intent, user_input):
             log_command(user_input, intent, params={"club": club_name}, result=result)
             return result
 
-    # ===============================
-    # HELP / SYSTEM
-    # ===============================
+    # --- HELP / SYSTEM ---
     if intent == "help":
         return """
 Команди:
