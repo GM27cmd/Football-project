@@ -8,7 +8,8 @@
  {"tag":"delete_player","regex":"изтрий играч"},
  {"tag":"help","regex":"помощ"},
  {"tag":"exit","regex":"изход"},
- {"tag":"transfer_player","regex":"Трансфер"},
- {"tag":"show_transfers_player","regex":"Покажи трансфери на .*"},
- {"tag":"show_transfers_club","regex":"Покажи трансфери на .*"}
+
+ {"tag":"transfer_player","regex":"трансфер"},
+ {"tag":"show_transfers_player","regex":"покажи трансфери на играч"},
+ {"tag":"show_transfers_club","regex":"покажи трансфери на клуб"}
 ]
