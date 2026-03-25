@@ -51,7 +51,7 @@ CREATE TABLE Players (
 );
 
 -- Трансфери
-CREATE TABLE Transfers (
+CREATE TABLE IF NOT EXISTS Transfers (
     transfer_id INTEGER PRIMARY KEY AUTOINCREMENT,
     player_id INTEGER NOT NULL,
     from_club_id INTEGER,
@@ -59,9 +59,9 @@ CREATE TABLE Transfers (
     transfer_date TEXT NOT NULL,
     fee REAL,
     note TEXT,
-    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
-    FOREIGN KEY (from_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
-    FOREIGN KEY (to_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
+    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
+    FOREIGN KEY (from_club_id) REFERENCES clubs(club_id) ON DELETE SET NULL,
+    FOREIGN KEY (to_club_id) REFERENCES clubs(club_id) ON DELETE SET NULL,
     CHECK (from_club_id IS NULL OR from_club_id != to_club_id)
 );
 
