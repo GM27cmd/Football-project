@@ -1,17 +1,8 @@
 # src/chatbot/router.py
 import re
 from services.clubs_service import add_club, get_all_clubs, delete_club
-from services.players_service import (
-    add_player,
-    list_players_by_club,
-    update_player_number,
-    delete_player
-)
-from services.transfers_service import (
-    transfer_player,
-    list_transfers_by_player,
-    list_transfers_by_club
-)
+from services.players_service import add_player, list_players_by_club, update_player_number, delete_player
+from services.transfers_service import transfer_player, list_transfers_by_player, list_transfers_by_club
 from utils.logger import log_command
 
 def route_intent(intent, user_input):
@@ -82,23 +73,27 @@ def route_intent(intent, user_input):
 
     # --- TRANSFERS ---
     if intent == "transfer_player":
-       match = re.search(
-           r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?(\s+забележка\s+(.+))?",
-           user_input,
-           re.IGNORECASE
-        )    
-    if match:
-        player_name = match.group(1).strip()
-        from_club = match.group(2).strip()
-        to_club = match.group(3).strip()
-        date = match.group(4)
-        fee = float(match.group(6)) if match.group(6) else None
-        note = match.group(8).strip() if match.group(8) else None
-        result = transfer_player(player_name, from_club, to_club, date, fee, note)
-        log_command(user_input, intent,
-                    params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee, "note": note},
-                    result=result)
-        return result
+        match = re.search(
+            r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?(\s+забележка\s+(.+))?",
+            user_input,
+            re.IGNORECASE
+        )
+        if match:
+            player_name = match.group(1).strip()
+            from_club = match.group(2).strip()
+            to_club = match.group(3).strip()
+            date = match.group(4)
+            fee = float(match.group(6)) if match.group(6) else None
+            note = match.group(8).strip() if match.group(8) else None
+            result = transfer_player(player_name, from_club, to_club, date, fee, note)
+            log_command(
+                user_input, intent,
+                params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee, "note": note},
+                result=result
+            )
+            return result
+        else:
+            return "❌ Грешен формат на трансфер. Пример: Трансфер Иван Петров от Левски в Лудогорец 2026-03-10"
 
     if intent == "show_transfers_player":
         match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
@@ -135,6 +130,7 @@ def route_intent(intent, user_input):
 Трансфери:
 - Трансфер Иван Петров от Левски в Лудогорец 2026-03-10
 - Трансфер Иван Петров от Левски в Лудогорец 2026-03-10 сума 50000
+- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10 сума 50000 забележка пример
 - Покажи трансфери на Иван Петров
 - Покажи трансфери на Левски
 
@@ -142,7 +138,6 @@ def route_intent(intent, user_input):
 - помощ
 - изход
 """
-
     if intent == "exit":
         return "exit"
 
