@@ -11,6 +11,8 @@ def get_player_id(name):
     return result[0] if result else None
 
 def get_club_id(name):
+    if name in [None, "", "няма", "свободен"]:
+        return None
     result = execute_query(
         "SELECT club_id FROM clubs WHERE name = ?",
         (name,),
@@ -27,16 +29,16 @@ def transfer_player(player_name, from_club_name, to_club_name, date, fee=None, n
     player = get_player_id(player_name)
     if not player:
         return "❌ Играчът не съществува."
-
     player_id, current_club_id = player
-    from_club_id = get_club_id(from_club_name) if from_club_name else None
-    to_club_id = get_club_id(to_club_name)
 
+    from_club_id = get_club_id(from_club_name)
+    to_club_id = get_club_id(to_club_name)
     if not to_club_id:
         return f"❌ Клубът {to_club_name} не съществува."
 
+    # Проверка текущ клуб
     if current_club_id != from_club_id:
-        if current_club_id is None and from_club_name in [None, "", "няма"]:
+        if current_club_id is None and from_club_id is None:
             pass
         else:
             return "❌ Играчът не принадлежи на отбора 'от'."
@@ -45,16 +47,19 @@ def transfer_player(player_name, from_club_name, to_club_name, date, fee=None, n
         return "❌ From и To клубовете не могат да съвпадат."
 
     try:
+        # INSERT трансфер
         execute_query(
-            """INSERT INTO transfers 
+            """INSERT INTO Transfers
                (player_id, from_club_id, to_club_id, transfer_date, fee, note)
                VALUES (?, ?, ?, ?, ?, ?)""",
             (player_id, from_club_id, to_club_id, date, fee, note)
         )
+        # UPDATE текущ клуб на играча
         execute_query(
             "UPDATE players SET club_id = ? WHERE player_id = ?",
             (to_club_id, player_id)
         )
+
         msg = f"✅ {player_name} трансфериран от {from_club_name or 'свободен'} в {to_club_name} на {date}."
         if fee:
             msg += f" Сума: {fee}"
@@ -71,8 +76,8 @@ def list_transfers_by_player(player_name):
     player_id, _ = player
 
     transfers = execute_query(
-        """SELECT t.transfer_date, c_from.name, c_to.name, t.fee, t.note 
-           FROM transfers t
+        """SELECT t.transfer_date, c_from.name, c_to.name, t.fee, t.note
+           FROM Transfers t
            LEFT JOIN clubs c_from ON t.from_club_id = c_from.club_id
            JOIN clubs c_to ON t.to_club_id = c_to.club_id
            WHERE t.player_id = ?
@@ -84,7 +89,10 @@ def list_transfers_by_player(player_name):
     if not transfers:
         return "Няма трансфери за този играч."
 
-    return "\n".join([f"{row[0]}: {row[1] or 'свободен'} → {row[2]} (сума: {row[3] or 'N/A'}, забележка: {row[4] or 'N/A'})" for row in transfers])
+    return "\n".join([
+        f"{row[0]}: {row[1] or 'свободен'} → {row[2]} (сума: {row[3] or 'N/A'}, забележка: {row[4] or 'N/A'})"
+        for row in transfers
+    ])
 
 def list_transfers_by_club(club_name):
     club_id = get_club_id(club_name)
@@ -93,7 +101,7 @@ def list_transfers_by_club(club_name):
 
     transfers = execute_query(
         """SELECT t.transfer_date, p.full_name, c_from.name, c_to.name, t.fee, t.note
-           FROM transfers t
+           FROM Transfers t
            JOIN players p ON t.player_id = p.player_id
            LEFT JOIN clubs c_from ON t.from_club_id = c_from.club_id
            JOIN clubs c_to ON t.to_club_id = c_to.club_id
@@ -106,4 +114,7 @@ def list_transfers_by_club(club_name):
     if not transfers:
         return "Няма трансфери за този клуб."
 
-    return "\n".join([f"{row[0]}: {row[1]} {row[2] or 'свободен'} → {row[3]} (сума: {row[4] or 'N/A'}, забележка: {row[5] or 'N/A'})" for row in transfers])
+    return "\n".join([
+        f"{row[0]}: {row[1]} {row[2] or 'свободен'} → {row[3]} (сума: {row[4] or 'N/A'}, забележка: {row[5] or 'N/A'})"
+        for row in transfers
+    ])
