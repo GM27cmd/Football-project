@@ -72,7 +72,29 @@ def route_intent(intent, user_input):
             return result
 
     # --- TRANSFERS ---
-    if intent == "transfer_player":
+    if user_input.lower().startswith("покажи трансфери на"):
+        match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
+        if match:
+            name = match.group(1).strip()
+
+            # първо като играч
+            result = list_transfers_by_player(name)
+            if "❌ Играчът не съществува." not in result:
+                log_command(user_input, "show_transfers_player", params={"player": name}, result=result)
+                return result
+
+            # ако не е играч → пробвай като клуб
+            result = list_transfers_by_club(name)
+            if "❌ Клубът не съществува." not in result:
+                log_command(user_input, "show_transfers_club", params={"club": name}, result=result)
+                return result
+
+            # няма такъв играч или клуб
+            return "❌ Няма трансфери за този играч или клуб."
+
+
+    # ✅ REAL transfer (само ако започва с "Трансфер")
+    if user_input.lower().startswith("трансфер"):
         match = re.search(
             r"Трансфер\s+(.+?)\s+от\s+(.+?)\s+в\s+(.+?)\s+(\d{4}-\d{2}-\d{2})(\s+сума\s+(\d+))?(\s+забележка\s+(.+))?",
             user_input,
@@ -85,31 +107,25 @@ def route_intent(intent, user_input):
             date = match.group(4)
             fee = float(match.group(6)) if match.group(6) else None
             note = match.group(8).strip() if match.group(8) else None
+
             result = transfer_player(player_name, from_club, to_club, date, fee, note)
+
             log_command(
-                user_input, intent,
-                params={"player": player_name, "from": from_club, "to": to_club, "date": date, "fee": fee, "note": note},
+                user_input,
+                "transfer_player",
+                params={
+                    "player": player_name,
+                    "from": from_club,
+                    "to": to_club,
+                    "date": date,
+                    "fee": fee,
+                    "note": note
+                },
                 result=result
             )
             return result
         else:
             return "❌ Грешен формат на трансфер. Пример: Трансфер Иван Петров от Левски в Лудогорец 2026-03-10"
-
-    if intent == "show_transfers_player":
-        match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
-        if match:
-            player_name = match.group(1).strip()
-            result = list_transfers_by_player(player_name)
-            log_command(user_input, intent, params={"player": player_name}, result=result)
-            return result
-
-    if intent == "show_transfers_club":
-        match = re.search(r"Покажи трансфери на\s+(.+)", user_input, re.IGNORECASE)
-        if match:
-            club_name = match.group(1).strip()
-            result = list_transfers_by_club(club_name)
-            log_command(user_input, intent, params={"club": club_name}, result=result)
-            return result
 
     # --- HELP / SYSTEM ---
     if intent == "help":
