@@ -11,5 +11,10 @@
 
  {"tag":"transfer_player","regex":"трансфер"},
  {"tag":"show_transfers_player","regex":"покажи трансфери на играч"},
- {"tag":"show_transfers_club","regex":"покажи трансфери на клуб"}
+ {"tag":"show_transfers_club","regex":"покажи трансфери на клуб"},
+
+ {"tag":"create_league","regex":"създай лига"},
+ {"tag":"add_team_league","regex":"добави отбор"},
+ {"tag":"list_teams_league","regex":"покажи отбори"},
+ {"tag":"generate_schedule","regex":"генерирай програма"}
 ]
