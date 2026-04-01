@@ -3,7 +3,7 @@ Football League Manager Описание на проекта
 
 Как се стартира:
 1. От папката src директно:
-cd "C:\Users\Students\Desktop\New folder\Football-project\src"
+cd ""C:\Users\Students\Football-project""
 python main.py
 2. От родителската директория (Football-project) или другаде — работи пак, защото sys.path вече е фиксиран:
 python src/main.py
