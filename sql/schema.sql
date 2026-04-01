@@ -3,9 +3,10 @@ PRAGMA foreign_keys = ON;
 -- Лиги
 CREATE TABLE Leagues (
     league_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    country TEXT NOT NULL,
-    level INTEGER NOT NULL
+    name TEXT NOT NULL,
+    season TEXT NOT NULL,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(name, season)
 );
 
 -- Клубове
@@ -22,16 +23,11 @@ CREATE TABLE Clubs (
 
 -- Отбори в конкретен сезон
 CREATE TABLE League_Teams (
-    league_team_id INTEGER PRIMARY KEY AUTOINCREMENT,
     league_id INTEGER NOT NULL,
     club_id INTEGER NOT NULL,
-    season TEXT NOT NULL,
-    FOREIGN KEY (league_id) REFERENCES Leagues(league_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (club_id) REFERENCES Clubs(club_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
+    PRIMARY KEY (league_id, club_id),
+    FOREIGN KEY (league_id) REFERENCES Leagues(league_id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
 );
 
 -- Играч
@@ -68,21 +64,16 @@ CREATE TABLE IF NOT EXISTS Transfers (
 -- Мачове
 CREATE TABLE Matches (
     match_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league_id INTEGER NOT NULL,
+    round_no INTEGER NOT NULL,
     home_club_id INTEGER NOT NULL,
     away_club_id INTEGER NOT NULL,
-    home_goals INTEGER DEFAULT 0,
-    away_goals INTEGER DEFAULT 0,
-    match_date TEXT NOT NULL,
-    league_id INTEGER NOT NULL,
-    FOREIGN KEY (home_club_id) REFERENCES Clubs(club_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
+    match_date TEXT,
+    home_goals INTEGER,
+    away_goals INTEGER,
+    FOREIGN KEY (league_id) REFERENCES Leagues(league_id),
+    FOREIGN KEY (home_club_id) REFERENCES Clubs(club_id),
     FOREIGN KEY (away_club_id) REFERENCES Clubs(club_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (league_id) REFERENCES Leagues(league_id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
 );
 
 -- Голове
