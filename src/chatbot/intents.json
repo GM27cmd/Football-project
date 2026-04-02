@@ -16,5 +16,6 @@
  {"tag":"create_league","regex":"създай лига"},
  {"tag":"add_team_league","regex":"добави отбор"},
  {"tag":"list_teams_league","regex":"покажи отбори"},
- {"tag":"generate_schedule","regex":"генерирай програма"}
+ {"tag":"generate_schedule","regex":"генерирай програма"},
+ {"tag":"show_schedule","regex":"покажи програма"}
 ]
