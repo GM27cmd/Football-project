@@ -14,6 +14,14 @@ def get_league(name, season):
     result = execute_query(query, (name, season), fetch=True)
     return result[0][0] if result else None
 
+def get_matches_by_league(cursor, league_id):
+    cursor.execute("""
+        SELECT round_no, home_club_id, away_club_id
+        FROM matches
+        WHERE league_id = ?
+        ORDER BY round_no, home_club_id
+    """, (league_id,))
+    return cursor.fetchall()
 
 # =========================
 # LEAGUE TEAMS
