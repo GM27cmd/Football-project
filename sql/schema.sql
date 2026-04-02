@@ -53,11 +53,11 @@ CREATE TABLE IF NOT EXISTS Transfers (
     from_club_id INTEGER,
     to_club_id INTEGER NOT NULL,
     transfer_date TEXT NOT NULL,
-    fee REAL,
-    note TEXT,
-    FOREIGN KEY (player_id) REFERENCES players(player_id) ON DELETE CASCADE,
-    FOREIGN KEY (from_club_id) REFERENCES clubs(club_id) ON DELETE SET NULL,
-    FOREIGN KEY (to_club_id) REFERENCES clubs(club_id) ON DELETE SET NULL,
+    fee REAL DEFAULT NULL,       -- сумата е optional
+    note TEXT DEFAULT NULL,      -- забележка е optional
+    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
+    FOREIGN KEY (from_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
+    FOREIGN KEY (to_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
     CHECK (from_club_id IS NULL OR from_club_id != to_club_id)
 );
 
