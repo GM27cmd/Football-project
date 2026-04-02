@@ -5,6 +5,7 @@ from services.players_service import add_player, list_players_by_club, update_pl
 from services.transfers_service import transfer_player, list_transfers_by_player, list_transfers_by_club
 from utils.logger import log_command
 from services.leagues_service import *
+from services.leagues_service import show_league_schedule
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
@@ -153,7 +154,16 @@ def route_intent(intent, user_input):
         match = re.search(r"генерирай програма\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
         if match:
             return generate_schedule_service(match.group(1), match.group(2))
-
+    
+    if intent == "show_schedule":
+        match = re.search(r"покажи програма\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        if match:
+            league_name = match.group(1).strip()
+            season = match.group(2).strip()
+            result = show_league_schedule(league_name, season)
+            log_command(user_input, intent, params={"league": league_name, "season": season}, result=result)
+            return result
+    
     # --- HELP / SYSTEM ---
     if intent == "help":
         return """
@@ -166,6 +176,7 @@ def route_intent(intent, user_input):
 Добави отбор Ботев в лига Първа лига 2025/2026
 
 Генерирай програма Първа лига 2025/2026
+Покажи програма Първа лига 2025/2026
 
 Клубове:
 - Добави клуб Левски
