@@ -7,7 +7,7 @@ from database.db import execute_query, get_connection
 # =========================
 
 def get_club_id(name):
-    result = execute_query("SELECT id FROM clubs WHERE name = ?", (name,), fetch=True)
+    result = execute_query("SELECT club_id FROM Clubs WHERE name = ?", (name,), fetch=True)
     return result[0][0] if result else None
 
 def validate_season(season):
@@ -63,35 +63,41 @@ def show_league_schedule(league_name, season):
     cursor = conn.cursor()
 
     # Взимаме ID на лигата
-    cursor.execute("SELECT id FROM leagues WHERE name=? AND season=?", (league_name, season))
+    cursor.execute("SELECT league_id FROM Leagues WHERE name=? AND season=?", (league_name, season))
     row = cursor.fetchone()
     if not row:
         return f"❌ Лига '{league_name}' сезон {season} не съществува."
     league_id = row[0]
 
-    # Взимаме всички мачове за тази лига, сортирани по кръг
+    # Взимаме мачовете
     cursor.execute("""
         SELECT round_no, home_club_id, away_club_id 
-        FROM matches 
+        FROM Matches 
         WHERE league_id=? 
         ORDER BY round_no
     """, (league_id,))
     matches = cursor.fetchall()
+
     if not matches:
         return "❌ Все още няма генерирана програма за тази лига."
 
     schedule_text = f"Програма за {league_name} {season}:\n"
     current_round = None
+
     for match in matches:
         round_no, home_id, away_id = match
+
         if round_no != current_round:
             schedule_text += f"\nКръг {round_no}:\n"
             current_round = round_no
-        # взимаме имена на отборите
-        cursor.execute("SELECT name FROM clubs WHERE id=?", (home_id,))
+
+        # взимаме имената правилно
+        cursor.execute("SELECT name FROM Clubs WHERE club_id=?", (home_id,))
         home_name = cursor.fetchone()[0]
-        cursor.execute("SELECT name FROM clubs WHERE id=?", (away_id,))
+
+        cursor.execute("SELECT name FROM Clubs WHERE club_id=?", (away_id,))
         away_name = cursor.fetchone()[0]
+
         schedule_text += f"- {home_name} vs {away_name}\n"
 
     return schedule_text
