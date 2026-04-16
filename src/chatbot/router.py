@@ -6,6 +6,14 @@ from services.transfers_service import transfer_player, list_transfers_by_player
 from utils.logger import log_command
 from services.leagues_service import *
 from services.leagues_service import show_league_schedule
+from services.matches_service import (
+    show_round,
+    select_match,
+    set_result,
+    add_goal,
+    add_card,
+    show_events
+)
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
@@ -163,6 +171,44 @@ def route_intent(intent, user_input):
             result = show_league_schedule(league_name, season)
             log_command(user_input, intent, params={"league": league_name, "season": season}, result=result)
             return result
+
+    if intent == "show_round":
+        match = re.search(r"покажи кръг\s+(\d+)\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        if match:
+            return show_round(match.group(2), match.group(3), int(match.group(1)))
+
+    # SELECT MATCH
+    if intent == "select_match":
+        match = re.search(r"избери мач\s+(\d+)", user_input, re.IGNORECASE)
+        if match:
+            return select_match(int(match.group(1)))
+
+    # RESULT
+    if user_input.lower().startswith("резултат"):
+        match = re.search(r"резултат\s+(.+?)-(.+?)\s+(\d+):(\d+)", user_input, re.IGNORECASE)
+        if match:
+            return set_result(
+                match.group(1).strip(),
+                match.group(2).strip(),
+                int(match.group(3)),
+                int(match.group(4))
+            )
+
+    # GOAL
+    if intent == "add_goal":
+        match = re.search(r"гол\s+(.+?)\s+(.+?)\s+(\d+)", user_input, re.IGNORECASE)
+        if match:
+            return add_goal(match.group(1), match.group(2), int(match.group(3)))
+
+    # CARD
+    if intent == "add_card":
+        match = re.search(r"картон\s+(.+?)\s+(.+?)\s+(Y|R)\s+(\d+)", user_input, re.IGNORECASE)
+        if match:
+            return add_card(match.group(1), match.group(2), match.group(3), int(match.group(4)))
+
+    # EVENTS
+    if intent == "show_events":
+        return show_events()    
     
     # --- HELP / SYSTEM ---
     if intent == "help":
