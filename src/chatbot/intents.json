@@ -17,5 +17,11 @@
  {"tag":"add_team_league","regex":"добави отбор"},
  {"tag":"list_teams_league","regex":"покажи отбори"},
  {"tag":"generate_schedule","regex":"генерирай програма"},
- {"tag":"show_schedule","regex":"покажи програма"}
+ {"tag":"show_schedule","regex":"покажи програма"},
+
+ {"tag":"show_round","regex":"покажи кръг"},
+{"tag":"select_match","regex":"избери мач"},
+{"tag":"add_goal","regex":"гол"},
+{"tag":"add_card","regex":"картон"},
+{"tag":"show_events","regex":"покажи събития"}
 ]
