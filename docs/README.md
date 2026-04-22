@@ -1,6 +1,8 @@
 Football-project
 Football League Manager Описание на проекта
 
+---
+
 Как се стартира:
 1. От папката src директно:
 cd ""C:\Users\Students\Football-project""
