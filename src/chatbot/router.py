@@ -6,6 +6,7 @@ from services.transfers_service import transfer_player, list_transfers_by_player
 from utils.logger import log_command
 from services.leagues_service import *
 from services.leagues_service import show_league_schedule
+from services.leagues_service import show_leagues
 from services.matches_service import (
     show_round,
     select_match,
@@ -14,6 +15,7 @@ from services.matches_service import (
     add_card,
     show_events
 )
+from chatbot.help import show_help
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
@@ -146,11 +148,17 @@ def route_intent(intent, user_input):
             return result
         
     if intent == "add_team_league":
-        match = re.search(r"добави отбор\s+(.+?)\s+в лига\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        match = re.search(
+            r"добави отбор\s+(.+?)\s+в\s+(.+?)(\s+(\d{4}/\d{4}))?",
+            user_input,
+            re.IGNORECASE
+        )
+
         if match:
-            club = match.group(1)
-            league = match.group(2)
-            season = match.group(3)
+            club = match.group(1).strip()
+            league = match.group(2).strip()
+            season = match.group(4) if match.group(4) else None
+
             return add_team_service(club, league, season)
         
     if intent == "list_teams_league":
@@ -206,46 +214,20 @@ def route_intent(intent, user_input):
         if match:
             return add_card(match.group(1), match.group(2), match.group(3), int(match.group(4)))
 
+    # LEAGUES
+    if intent == "show_leagues":
+        match = re.search(r"покажи\s+лиги", user_input, re.IGNORECASE)
+        if match:
+            return show_leagues()
+
     # EVENTS
     if intent == "show_events":
         return show_events()    
     
     # --- HELP / SYSTEM ---
     if intent == "help":
-        return """
-Команди:
-
-Създай лига Първа лига 2025/2026
-Добави отбор Левски в лига Първа лига 2025/2026
-Добави отбор ЦСКА в лига Първа лига 2025/2026
-Добави отбор Лудогорец в лига Първа лига 2025/2026
-Добави отбор Ботев в лига Първа лига 2025/2026
-
-Генерирай програма Първа лига 2025/2026
-Покажи програма Първа лига 2025/2026
-
-Клубове:
-- Добави клуб Левски
-- Покажи всички клубове
-- Изтрий клуб Левски
-
-Играчите:
-- Добави играч Иван Петров в Левски позиция FW номер 9 роден 2000-01-01 националност България
-- Покажи играчи на Левски
-- Смени номер на Иван Петров на 10
-- Изтрий играч Иван Петров
-
-Трансфери:
-- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10
-- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10 сума 50000
-- Трансфер Иван Петров от Левски в Лудогорец 2026-03-10 сума 50000 забележка пример
-- Покажи трансфери на Иван Петров
-- Покажи трансфери на Левски
-
-Система:
-- помощ
-- изход
-"""
+        return show_help()
+    
     if intent == "exit":
         return "exit"
 
