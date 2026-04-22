@@ -2,6 +2,10 @@ from chatbot.nlu import detect_intent
 from chatbot.router import route_intent
 from utils.logger import log_command
 from chatbot.help import show_help
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
 def main():
     print("⚽ FootballAI Assistant")
@@ -28,7 +32,6 @@ def main():
         print(response)
 
         log_command(user_input, intent, response)
-
 
 if __name__ == "__main__":
     main()
