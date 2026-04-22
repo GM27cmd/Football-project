@@ -8,6 +8,12 @@ def create_league(name, season):
     query = "INSERT INTO Leagues (name, season) VALUES (?, ?)"
     execute_query(query, (name, season))
 
+def get_all_leagues():
+    query = """
+        SELECT league_id, name, season
+        FROM Leagues
+    """
+    return execute_query(query, fetch=True)
 
 def get_league(name, season):
     query = "SELECT league_id FROM Leagues WHERE name = ? AND season = ?"
@@ -27,9 +33,35 @@ def get_matches_by_league(cursor, league_id):
 # LEAGUE TEAMS
 # =========================
 
-def add_team_to_league(league_id, club_id):
-    query = "INSERT INTO League_Teams (league_id, club_id) VALUES (?, ?)"
-    execute_query(query, (league_id, club_id))
+def add_team_to_league(club_name, league_name, season):
+    league = execute_query(
+        "SELECT league_id FROM Leagues WHERE name=? AND season=?",
+        (league_name, season),
+        fetch=True
+    )
+
+    if not league:
+        return "❌ Лигата не съществува."
+
+    league_id = league[0][0]
+
+    club = execute_query(
+        "SELECT club_id FROM Clubs WHERE name=?",
+        (club_name,),
+        fetch=True
+    )
+
+    if not club:
+        return "❌ Клубът не съществува."
+
+    club_id = club[0][0]
+
+    execute_query(
+        "INSERT OR IGNORE INTO League_Teams (league_id, club_id) VALUES (?, ?)",
+        (league_id, club_id)
+    )
+
+    return f"✅ {club_name} добавен в {league_name} ({season})."
 
 
 def get_teams_in_league(league_id):
