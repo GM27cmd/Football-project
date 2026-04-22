@@ -6,8 +6,8 @@
  {"tag":"list_players","regex":"покажи играчи"},
  {"tag":"update_player_number","regex":"смени номер"},
  {"tag":"delete_player","regex":"изтрий играч"},
- {"tag":"help","regex":"помощ"},
- {"tag":"exit","regex":"изход"},
+ {"tag":"help","regex": "помощ|help|команди|покажи команди"},
+ {"tag":"exit","regex":"изход|exit|quit"},
 
  {"tag":"transfer_player","regex":"трансфер"},
  {"tag":"show_transfers_player","regex":"покажи трансфери на играч"},
@@ -23,5 +23,6 @@
 {"tag":"select_match","regex":"избери мач"},
 {"tag":"add_goal","regex":"гол"},
 {"tag":"add_card","regex":"картон"},
-{"tag":"show_events","regex":"покажи събития"}
+{"tag":"show_events","regex":"покажи събития"},
+{"tag":"show_leagues","regex": "покажи лиги"}
 ]
