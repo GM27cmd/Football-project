@@ -1,5 +1,7 @@
 import re
 from repositories.leagues_repo import *
+from repositories.leagues_repo import get_all_leagues
+from repositories.leagues_repo import add_team_to_league
 from database.db import execute_query, get_connection
 
 # =========================
@@ -16,6 +18,17 @@ def validate_season(season):
 # =========================
 # LEAGUE CRUD
 # =========================
+def show_leagues():
+    leagues = get_all_leagues()
+
+    if not leagues:
+        return "❌ Няма създадени лиги."
+
+    result = "🏆 ЛИГИ:\n"
+    for lg in leagues:
+        result += f"- {lg[1]} ({lg[2]})\n"
+
+    return result
 
 def create_league_service(name, season):
     if not validate_season(season):
@@ -28,34 +41,13 @@ def create_league_service(name, season):
     return f"✅ Лигата {name} ({season}) е създадена."
 
 def add_team_service(club_name, league_name, season):
-    league_id = get_league(league_name, season)
-    if not league_id:
-        return "❌ Няма такава лига."
+    if not season:
+        return "❌ Липсва сезон. Пример: 2025/2026"
 
-    club_id = get_club_id(club_name)
-    if not club_id:
-        return "❌ Няма такъв клуб."
-
-    teams = get_teams_in_league(league_id)
-    if any(t[0] == club_id for t in teams):
-        return "❌ Отборът вече е в лигата."
-
-    add_team_to_league(league_id, club_id)
-    return f"✅ {club_name} е добавен в {league_name}."
-
-def list_teams_service(league_name, season):
-    league_id = get_league(league_name, season)
-    if not league_id:
-        return "❌ Няма такава лига."
-
-    teams = get_teams_in_league(league_id)
-    if not teams:
-        return "⚠️ Няма отбори."
-
-    return "\n".join([f"- {t[1]}" for t in teams])
+    return add_team_to_league(club_name, league_name, season)
 
 # =========================
-# SHOW SCHEDULE
+# SHOW SCHEDULEС
 # =========================
 
 def show_league_schedule(league_name, season):
