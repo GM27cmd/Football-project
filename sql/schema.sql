@@ -71,6 +71,7 @@ CREATE TABLE Matches (
     match_date TEXT,
     home_goals INTEGER,
     away_goals INTEGER,
+    status TEXT DEFAULT 'scheduled',
     FOREIGN KEY (league_id) REFERENCES Leagues(league_id),
     FOREIGN KEY (home_club_id) REFERENCES Clubs(club_id),
     FOREIGN KEY (away_club_id) REFERENCES Clubs(club_id)
