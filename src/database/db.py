@@ -11,12 +11,17 @@ def get_connection():
 
 
 def execute_query(query, params=(), fetch=False):
-    conn = get_connection()
+    import sqlite3
+
+    conn = sqlite3.connect("football.db")
     cursor = conn.cursor()
-    try:
-        cursor.execute(query, params)
-        conn.commit()
-        if fetch:
-            return cursor.fetchall()
-    finally:
+
+    cursor.execute(query, params)
+
+    if fetch:
+        result = cursor.fetchall()
         conn.close()
+        return result
+
+    conn.commit()
+    conn.close()
