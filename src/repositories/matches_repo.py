@@ -6,11 +6,32 @@ from database.db import execute_query
 # MATCHES
 # =========================
 
+def insert_match(league_id, round_no, home_name, away_name):
+    query = """
+        INSERT INTO Matches (league_id, round_no, home_club_id, away_club_id, status)
+        VALUES (
+            ?,
+            ?,
+            (SELECT club_id FROM Clubs WHERE name = ?),
+            (SELECT club_id FROM Clubs WHERE name = ?),
+            'scheduled'
+        )
+    """
+    execute_query(query, (league_id, round_no, home_name, away_name))
+    
 def get_matches_by_round(league_id, round_no):
     query = """
-        SELECT match_id, home_club_id, away_club_id, home_goals, away_goals
-        FROM Matches
-        WHERE league_id = ? AND round_no = ?
+        SELECT 
+            m.match_id,
+            hc.name AS home_team,
+            ac.name AS away_team,
+            m.home_goals,
+            m.away_goals,
+            m.status
+        FROM Matches m
+        JOIN Clubs hc ON m.home_club_id = hc.club_id
+        JOIN Clubs ac ON m.away_club_id = ac.club_id
+        WHERE m.league_id = ? AND m.round_no = ?
     """
     return execute_query(query, (league_id, round_no), fetch=True)
 
