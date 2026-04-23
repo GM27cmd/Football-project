@@ -16,6 +16,7 @@ from services.matches_service import (
     show_events
 )
 from chatbot.help import show_help
+from services.leagues_service import list_teams_service
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
@@ -149,7 +150,7 @@ def route_intent(intent, user_input):
         
     if intent == "add_team_league":
         match = re.search(
-            r"добави отбор\s+(.+?)\s+в\s+(.+?)(\s+(\d{4}/\d{4}))?",
+            r"добави отбор\s+(.+?)\s+в\s+(.+?)\s*(\d{4}/\d{4})?$",
             user_input,
             re.IGNORECASE
         )
@@ -157,7 +158,10 @@ def route_intent(intent, user_input):
         if match:
             club = match.group(1).strip()
             league = match.group(2).strip()
-            season = match.group(4) if match.group(4) else None
+            season = match.group(3)
+
+            if not season:
+                return "❌ Моля добави сезон. Пример: 2025/2026"
 
             return add_team_service(club, league, season)
         
