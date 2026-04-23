@@ -1,25 +1,30 @@
 import re
-from repositories.leagues_repo import *
-from repositories.leagues_repo import get_all_leagues
-from repositories.leagues_repo import add_team_to_league
-from repositories.leagues_repo import get_teams_in_league
-from repositories.leagues_repo import add_team_to_league, league_exists_by_name
 from database.db import execute_query, get_connection
+
+from repositories.leagues_repo import (
+    get_all_leagues,
+    get_league_by_name,
+    add_team_to_league,
+    create_league,
+    get_teams_in_league
+)
 
 # =========================
 # HELPERS
 # =========================
 
-def get_club_id(name):
-    result = execute_query("SELECT club_id FROM Clubs WHERE name = ?", (name,), fetch=True)
-    return result[0][0] if result else None
-
 def validate_season(season):
     return re.match(r"\d{4}/\d{4}", season)
 
+
+def normalize_text(text):
+    return text.strip()
+
+
 # =========================
-# LEAGUE CRUD
+# LEAGUES
 # =========================
+
 def show_leagues():
     leagues = get_all_leagues()
 
@@ -32,25 +37,57 @@ def show_leagues():
 
     return result
 
+
 def create_league_service(name, season):
+    name = normalize_text(name)
+    season = normalize_text(season)
+
     if not validate_season(season):
         return "❌ Невалиден сезон (формат: YYYY/YYYY)"
 
-    if get_league(name, season):
+    if get_league_by_name(name, season):
         return "❌ Лигата вече съществува."
 
     create_league(name, season)
     return f"✅ Лигата {name} ({season}) е създадена."
 
-def add_team_service(club_name, league_name, season):
-    # 🔥 проверка дали има такава лига въобще
-    if not league_exists_by_name(league_name):
-        return f"❌ Няма лига с име '{league_name}'. Провери правописа."
 
-    return add_team_to_league(club_name, league_name, season)
+# =========================
+# TEAMS
+# =========================
+
+def add_team_service(club_name, league_name, season):
+    club_name = normalize_text(club_name)
+    league_name = normalize_text(league_name)
+    season = normalize_text(season)
+
+    league = get_league_by_name(league_name, season)
+    if not league:
+        return "❌ Лигата не съществува."
+
+    league_id = league[0]
+
+    # провери дали вече е добавен
+    teams = get_teams_in_league(league_id, season)
+    if teams:
+        for t in teams:
+            if t[0].lower() == club_name.lower():
+                return f"❌ {club_name} вече е в лигата."
+
+    result = add_team_to_league(club_name, league_id)
+
+    return result
+
 
 def list_teams_service(league_name, season):
-    teams = get_teams_in_league(league_name, season)
+    league = get_league_by_name(league_name, season)
+
+    if not league:
+        return "❌ Лигата не съществува."
+
+    league_id = league[0]
+
+    teams = get_teams_in_league(league_id, season)
 
     if not teams:
         return "❌ Няма отбори в тази лига."
@@ -61,90 +98,94 @@ def list_teams_service(league_name, season):
 
     return result
 
+
 # =========================
-# SHOW SCHEDULEС
+# SCHEDULE
 # =========================
 
 def show_league_schedule(league_name, season):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Взимаме ID на лигата
-    cursor.execute("SELECT league_id FROM Leagues WHERE name=? AND season=?", (league_name, season))
+    cursor.execute(
+        "SELECT league_id FROM Leagues WHERE name=? AND season=?",
+        (league_name, season)
+    )
     row = cursor.fetchone()
+
     if not row:
-        return f"❌ Лига '{league_name}' сезон {season} не съществува."
+        return f"❌ Лига '{league_name}' ({season}) не съществува."
+
     league_id = row[0]
 
-    # Взимаме мачовете
     cursor.execute("""
-        SELECT round_no, home_club_id, away_club_id 
-        FROM Matches 
-        WHERE league_id=? 
+        SELECT round_no, home_club_id, away_club_id
+        FROM Matches
+        WHERE league_id=?
         ORDER BY round_no
     """, (league_id,))
+
     matches = cursor.fetchall()
 
     if not matches:
-        return "❌ Все още няма генерирана програма за тази лига."
+        return "❌ Няма генерирана програма."
 
-    schedule_text = f"Програма за {league_name} {season}:\n"
+    output = f"📅 Програма {league_name} ({season}):\n"
+
     current_round = None
 
-    for match in matches:
-        round_no, home_id, away_id = match
-
+    for round_no, home_id, away_id in matches:
         if round_no != current_round:
-            schedule_text += f"\nКръг {round_no}:\n"
+            output += f"\n🔹 Кръг {round_no}:\n"
             current_round = round_no
 
-        # взимаме имената правилно
         cursor.execute("SELECT name FROM Clubs WHERE club_id=?", (home_id,))
-        home_name = cursor.fetchone()[0]
+        home = cursor.fetchone()[0]
 
         cursor.execute("SELECT name FROM Clubs WHERE club_id=?", (away_id,))
-        away_name = cursor.fetchone()[0]
+        away = cursor.fetchone()[0]
 
-        schedule_text += f"- {home_name} vs {away_name}\n"
+        output += f"- {home} vs {away}\n"
 
-    return schedule_text
+    return output
+
 
 # =========================
-# ROUND ROBIN SCHEDULE
+# SCHEDULE GENERATION (FIXED)
 # =========================
 
 def generate_schedule_service(league_name, season):
-    league_id = get_league(league_name, season)
-    if not league_id:
-        return "❌ Няма такава лига."
+    league = get_league_by_name(league_name, season)
 
-    if league_has_matches(league_id):
-        return "❌ Вече има генерирана програма."
+    if not league:
+        return "❌ Лигата не съществува."
 
-    teams = get_teams_in_league(league_id)
-    team_ids = [t[0] for t in teams]
+    league_id = league[0]
 
-    if len(team_ids) < 4:
+    teams_raw = get_teams_in_league(league_id, season)
+    teams = [t[0] for t in teams_raw]
+
+    if len(teams) < 4:
         return "❌ Минимум 4 отбора."
 
-    # Добавяме BYE ако е нечетно
-    if len(team_ids) % 2 != 0:
-        team_ids.append(None)
-
-    n = len(team_ids)
+    n = len(teams)
     rounds = n - 1
+
+    schedule = []
 
     for r in range(rounds):
         for i in range(n // 2):
-            home = team_ids[i]
-            away = team_ids[n - 1 - i]
+            home = teams[i]
+            away = teams[n - 1 - i]
 
-            if home is None or away is None:
-                continue
+            if home != away:
+                schedule.append((r + 1, home, away))
 
-            insert_match(league_id, r + 1, home, away)
+        teams.insert(1, teams.pop())
 
-        # ротация на отборите
-        team_ids = [team_ids[0]] + [team_ids[-1]] + team_ids[1:-1]
+    from repositories.matches_repo import insert_match
 
-    return f"✅ Генерирана програма с {rounds} кръга."
+    for round_no, home, away in schedule:
+        insert_match(league_id, round_no, home, away)
+
+    return f"✅ Генерирани {rounds} кръга с по {len(schedule)//rounds} мача."
