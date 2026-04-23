@@ -40,16 +40,38 @@ def get_current_match():
 # =========================
 # ROUND MATCHES
 # =========================
-def show_round(league_id: int, round_no: int):
+from repositories.matches_repo import get_matches_by_round
+from repositories.leagues_repo import get_league_by_name_and_season
+
+
+def show_round(league_name: str, season: str, round_no: int):
+    # 1) намираме league_id от име + сезон
+    league = get_league_by_name_and_season(league_name, season)
+
+    if not league:
+        return "❌ Лигата не съществува или сезонът е грешен."
+
+    league_id = league[0]  # ако връща tuple (league_id, name, season)
+
+    # 2) взимаме мачовете
     matches = get_matches_by_round(league_id, round_no)
 
     if not matches:
-        return "❌ Няма мачове за този кръг."
+        return f"❌ Няма мачове за кръг {round_no}."
 
-    result = "📅 Мачове:\n"
+    # 3) форматиране
+    result = f"📅 Кръг {round_no} - {league_name} ({season})\n\n"
 
     for m in matches:
-        result += f"ID {m[0]} | {m[1]} vs {m[2]} | {m[3]}:{m[4]}\n"
+        match_id = m[0]
+        home = m[1]
+        away = m[2]
+        home_goals = m[3]
+        away_goals = m[4]
+
+        score = "⏳ неигран" if home_goals is None else f"{home_goals}:{away_goals}"
+
+        result += f"🆔 {match_id} | {home} vs {away} | {score}\n"
 
     return result
 
