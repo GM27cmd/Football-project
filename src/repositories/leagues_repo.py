@@ -15,6 +15,15 @@ def get_all_leagues():
     """
     return execute_query(query, fetch=True)
 
+def get_league_by_name(name, season):
+    query = """
+        SELECT league_id, name, season
+        FROM Leagues
+        WHERE name = ? AND season = ?
+    """
+    result = execute_query(query, (name, season), fetch=True)
+    return result[0] if result else None
+
 def get_league(name, season):
     query = "SELECT league_id FROM Leagues WHERE name = ? AND season = ?"
     result = execute_query(query, (name, season), fetch=True)
@@ -91,15 +100,16 @@ def add_team_to_league(club_name, league_name, season):
     return f"✅ {club_name} добавен в {league_name} ({season})."
 
 
-def get_teams_in_league(league_name, season):
+def get_teams_in_league(league_id, season):
     query = """
-        SELECT c.name
+        SELECT c.club_id, c.name
         FROM League_Teams lt
-        JOIN Leagues l ON lt.league_id = l.league_id
-        JOIN Clubs c ON lt.club_id = c.club_id
-        WHERE l.name = ? AND l.season = ?
+        JOIN Clubs c ON c.club_id = lt.club_id
+        JOIN Leagues l ON l.league_id = lt.league_id
+        WHERE l.league_id = ? AND l.season = ?
+        ORDER BY c.name
     """
-    return execute_query(query, (league_name, season), fetch=True)
+    return execute_query(query, (league_id, season), fetch=True)
 
 
 def remove_team_from_league(league_id, club_id):
