@@ -171,12 +171,20 @@ def route_intent(intent, user_input):
             return list_teams_service(match.group(1), match.group(2))
         
     if intent == "generate_schedule":
-        match = re.search(r"генерирай програма\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        match = re.search(
+            r"генерирай програма\s+(.+?)\s*\(?(\d{4}/\d{4})\)?",
+            user_input,
+            re.IGNORECASE
+        )
         if match:
             return generate_schedule_service(match.group(1), match.group(2))
     
     if intent == "show_schedule":
-        match = re.search(r"покажи програма\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        match = re.search(
+            r"покажи програма\s+(.+?)\s*\(?(\d{4}/\d{4})\)?",
+            user_input,
+            re.IGNORECASE
+        )
         if match:
             league_name = match.group(1).strip()
             season = match.group(2).strip()
@@ -185,7 +193,11 @@ def route_intent(intent, user_input):
             return result
 
     if intent == "show_round":
-        match = re.search(r"покажи кръг\s+(\d+)\s+(.+?)\s+(\d{4}/\d{4})", user_input, re.IGNORECASE)
+        match = re.search(
+            r"покажи кръг\s+(\d+)\s+(.+?)\s*\(?(\d{4}/\d{4})\)?",
+            user_input,
+            re.IGNORECASE
+        )
         if match:
             return show_round(match.group(2), match.group(3), int(match.group(1)))
 
