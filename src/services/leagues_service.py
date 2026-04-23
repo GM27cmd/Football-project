@@ -2,6 +2,8 @@ import re
 from repositories.leagues_repo import *
 from repositories.leagues_repo import get_all_leagues
 from repositories.leagues_repo import add_team_to_league
+from repositories.leagues_repo import get_teams_in_league
+from repositories.leagues_repo import add_team_to_league, league_exists_by_name
 from database.db import execute_query, get_connection
 
 # =========================
@@ -41,10 +43,23 @@ def create_league_service(name, season):
     return f"✅ Лигата {name} ({season}) е създадена."
 
 def add_team_service(club_name, league_name, season):
-    if not season:
-        return "❌ Липсва сезон. Пример: 2025/2026"
+    # 🔥 проверка дали има такава лига въобще
+    if not league_exists_by_name(league_name):
+        return f"❌ Няма лига с име '{league_name}'. Провери правописа."
 
     return add_team_to_league(club_name, league_name, season)
+
+def list_teams_service(league_name, season):
+    teams = get_teams_in_league(league_name, season)
+
+    if not teams:
+        return "❌ Няма отбори в тази лига."
+
+    result = f"🏆 Отбори в {league_name} ({season}):\n"
+    for t in teams:
+        result += f"- {t[0]}\n"
+
+    return result
 
 # =========================
 # SHOW SCHEDULEС
