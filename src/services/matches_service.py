@@ -45,21 +45,18 @@ from repositories.leagues_repo import get_league_by_name_and_season
 
 
 def show_round(league_name: str, season: str, round_no: int):
-    # 1) намираме league_id от име + сезон
     league = get_league_by_name_and_season(league_name, season)
 
     if not league:
-        return "❌ Лигата не съществува или сезонът е грешен."
+        return "❌ Лигата не съществува."
 
-    league_id = league[0]  # ако връща tuple (league_id, name, season)
+    league_id = league[0]
 
-    # 2) взимаме мачовете
     matches = get_matches_by_round(league_id, round_no)
 
     if not matches:
         return f"❌ Няма мачове за кръг {round_no}."
 
-    # 3) форматиране
     result = f"📅 Кръг {round_no} - {league_name} ({season})\n\n"
 
     for m in matches:
@@ -68,10 +65,14 @@ def show_round(league_name: str, season: str, round_no: int):
         away = m[2]
         home_goals = m[3]
         away_goals = m[4]
+        status = m[5]
 
-        score = "⏳ неигран" if home_goals is None else f"{home_goals}:{away_goals}"
+        if home_goals is None or away_goals is None:
+            score = "⏳ неигран"
+        else:
+            score = f"{home_goals}:{away_goals}"
 
-        result += f"🆔 {match_id} | {home} vs {away} | {score}\n"
+        result += f"🆔 {match_id} | {home} vs {away} с| {score} | {status}\n"
 
     return result
 
