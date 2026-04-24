@@ -102,15 +102,12 @@ def add_team_to_league(club_name, league_name, season):
 
 def get_teams_in_league(league_id, season):
     query = """
-        SELECT c.club_id, c.name
+        SELECT c.name
         FROM League_Teams lt
-        JOIN Clubs c ON c.club_id = lt.club_id
-        JOIN Leagues l ON l.league_id = lt.league_id
-        WHERE l.league_id = ? AND l.season = ?
-        ORDER BY c.name
+        JOIN Clubs c ON lt.club_id = c.club_id
+        WHERE lt.league_id = ?
     """
-    return execute_query(query, (league_id, season), fetch=True)
-
+    return execute_query(query, (league_id,), fetch=True)
 
 def remove_team_from_league(league_id, club_id):
     query = "DELETE FROM League_Teams WHERE league_id = ? AND club_id = ?"
