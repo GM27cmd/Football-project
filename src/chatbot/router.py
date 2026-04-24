@@ -17,6 +17,7 @@ from services.matches_service import (
 )
 from chatbot.help import show_help
 from services.leagues_service import list_teams_service
+current_match_id = None
 
 def route_intent(intent, user_input):
     user_input = user_input.strip()
