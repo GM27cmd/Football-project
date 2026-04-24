@@ -71,7 +71,7 @@ def add_team_service(club_name, league_name, season):
     teams = get_teams_in_league(league_id, season)
     if teams:
         for t in teams:
-            if t[0].lower() == club_name.lower():
+            if t[0].strip().lower() == club_name.strip().lower():
                 return f"❌ {club_name} вече е в лигата."
 
     result = add_team_to_league(club_name, league_id)
