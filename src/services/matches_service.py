@@ -113,28 +113,42 @@ def _get_player(player_id: int):
 # =========================
 # GOALS
 # =========================
-def add_goal(player_id: int, minute: int):
-    match = get_current_match()
-
-    if not match:
-        return "❌ Няма избран мач."
-
-    if not _validate_minute(minute):
+def add_goal(player_name, club_name, minute):
+    # 1. validate minute
+    if minute < 1 or minute > 120:
         return "❌ Невалидна минута (1–120)."
 
-    player = _get_player(player_id)
+    # 2. взимаме player + club
+    player = execute_query("""
+        SELECT player_id, club_id, full_name
+        FROM Players
+        WHERE LOWER(TRIM(full_name)) = LOWER(TRIM(?))
+    """, (player_name,), fetch=True)
+
     if not player:
         return "❌ Играчът не съществува."
 
-    home_team = match[1]
-    away_team = match[2]
+    player_id, player_club_id = player[0]
 
-    if player[2] not in (home_team, away_team):
-        return "❌ Играчът не е от участващите отбори."
+    club = execute_query(
+        "SELECT club_id FROM Clubs WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))",
+        (club_name,),
+        fetch=True
+    )
 
-    insert_goal(match[0], player_id, minute)
+    if not club:
+        return "❌ Отборът не съществува."
 
-    return f"⚽ Гол записан (играч #{player_id}, {minute} мин.)"
+    club_id = club[0][0]
+
+    # 3. проверка дали играчът е от отбора
+    if player_club_id != club_id:
+        return "❌ Играчът не е в този отбор."
+
+    # 4. запис
+    insert_goal(match_id=1, player_id=player_id, club_id=club_id, minute=minute)
+
+    return f"⚽ Гол записан: {player_name} ({club_name}) {minute}'"
 
 
 # =========================
