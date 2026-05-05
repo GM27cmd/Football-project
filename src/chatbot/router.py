@@ -209,21 +209,33 @@ def route_intent(intent, user_input):
             return select_match(int(match.group(1)))
 
     # RESULT
-    if user_input.lower().startswith("резултат"):
-        match = re.search(r"резултат\s+(.+?)-(.+?)\s+(\d+):(\d+)", user_input, re.IGNORECASE)
+        match = re.search(
+            r"резултат\s+(.+?)-(.+?)\s+(\d+):(\d+)",
+            user_input,
+            re.IGNORECASE
+        )
+
         if match:
-            return set_result(
-                match.group(1).strip(),
-                match.group(2).strip(),
-                int(match.group(3)),
-                int(match.group(4))
-            )
+            home = match.group(1).strip()
+            away = match.group(2).strip()
+            hg = int(match.group(3))
+            ag = int(match.group(4))
+
+            return set_result(home, away, hg, ag)
 
     # GOAL
     if intent == "add_goal":
-        match = re.search(r"гол\s+(.+?)\s+(.+?)\s+(\d+)", user_input, re.IGNORECASE)
-        if match:
-            return add_goal(match.group(1), match.group(2), int(match.group(3)))
+        parts = user_input.split()
+
+        try:
+            minute = int(parts[-1])
+            club_name = parts[-2]
+            player_name = " ".join(parts[1:-2])  # всичко между "гол" и клуба
+
+            return add_goal(player_name, club_name, minute)
+
+        except:
+            return "❌ Грешен формат. Пример: Гол Иван Георгиев Левски 23"
 
     # CARD
     if intent == "add_card":
