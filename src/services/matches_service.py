@@ -122,19 +122,18 @@ def add_goal(player_name, club_name, minute):
     player = execute_query("""
         SELECT player_id, club_id, full_name
         FROM Players
-        WHERE LOWER(TRIM(full_name)) = LOWER(TRIM(?))
-    """, (player_name,), fetch=True)
+        WHERE LOWER(full_name) LIKE LOWER(?)
+    """, (f"%{player_name}%",), fetch=True)
 
     if not player:
         return "❌ Играчът не съществува."
 
-    player_id, player_club_id = player[0]
+    player_id, player_club_id, _ = player[0]
 
-    club = execute_query(
-        "SELECT club_id FROM Clubs WHERE LOWER(TRIM(name)) = LOWER(TRIM(?))",
-        (club_name,),
-        fetch=True
-    )
+    club = execute_query("""
+        SELECT club_id FROM Clubs
+        WHERE LOWER(name) LIKE LOWER(?)
+    """, (f"%{club_name}%",), fetch=True)
 
     if not club:
         return "❌ Отборът не съществува."
@@ -146,7 +145,7 @@ def add_goal(player_name, club_name, minute):
         return "❌ Играчът не е в този отбор."
 
     # 4. запис
-    insert_goal(match_id=1, player_id=player_id, club_id=club_id, minute=minute)
+    insert_goal(match_id=current_match_id, player_id=player_id, club_id=club_id, minute=minute)
 
     return f"⚽ Гол записан: {player_name} ({club_name}) {minute}'"
 
