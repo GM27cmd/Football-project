@@ -10,6 +10,8 @@ from repositories.matches_repo import (
     get_goals,
     get_cards
 )
+from chatbot.router import current_match_id
+
 
 # =========================
 # GLOBAL CONTEXT (избран мач)
@@ -86,8 +88,11 @@ def set_result(home, away, home_goals, away_goals):
     if not match:
         return "❌ Няма избран мач."
 
-    match_id = match[0]
-
+    match_id = current_match_id
+    
+    if not current_match_id:
+        return "❌ Не е избран мач."
+    
     # проверка дали вече има резултат
     if match[3] is not None or match[4] is not None:
         return "❌ Този мач вече има въведен резултат."
@@ -122,7 +127,7 @@ def add_goal(player_name, club_name, minute):
     player = execute_query("""
         SELECT player_id, club_id, full_name
         FROM Players
-        WHERE LOWER(full_name) LIKE LOWER(?)
+        WHERE LOWER(full_name) = LOWER(?)
     """, (f"%{player_name}%",), fetch=True)
 
     if not player:
@@ -146,6 +151,8 @@ def add_goal(player_name, club_name, minute):
 
     # 4. запис
     insert_goal(match_id=current_match_id, player_id=player_id, club_id=club_id, minute=minute)
+    if not current_match_id:
+        return "❌ Не е избран мач."
 
     return f"⚽ Гол записан: {player_name} ({club_name}) {minute}'"
 
