@@ -20,9 +20,10 @@
  {"tag":"show_schedule","regex":"покажи програма"},
 
  {"tag":"show_round","regex":"покажи кръг"},
-{"tag":"select_match","regex":"избери мач"},
-{"tag":"add_goal","regex":"гол"},
-{"tag":"add_card","regex":"картон"},
-{"tag":"show_events","regex":"покажи събития"},
-{"tag":"show_leagues","regex": "покажи лиги"}
+ {"tag":"select_match","regex":"избери мач"},
+ {"tag":"add_goal","regex":"гол"},
+ {"tag":"set_result","regex":"резултат .*\\d+:\\d+.*запиши"},
+ {"tag":"add_card","regex":"картон"},
+ {"tag":"show_events","regex":"покажи събития"},
+ {"tag":"show_leagues","regex": "покажи лиги"}
 ]
