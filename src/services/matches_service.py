@@ -1,4 +1,8 @@
 # src/services/matches_service.py
+#
+# Правила:
+#   handler → service → repo (без SQL тук)
+#   current_match_id живее САМО тук – router/handlers не пипат глобала директно
 
 from database.db import execute_query
 from repositories.matches_repo import (
@@ -8,206 +12,259 @@ from repositories.matches_repo import (
     insert_goal,
     insert_card,
     get_goals,
-    get_cards
+    get_cards,
 )
-from chatbot.router import current_match_id
+from repositories.leagues_repo import get_league_by_name_and_season
+
+# =========================
+# RUNTIME КОНТЕКСТ
+# =========================
+current_match_id = None          # избран мач за текущата сесия
 
 
 # =========================
-# GLOBAL CONTEXT (избран мач)
+# ИЗБОР НА МАЧ
 # =========================
-current_match_id = None
-
-
-# =========================
-# MATCH SELECTION
-# =========================
-def select_match(match_id: int):
+def select_match(match_id: int) -> str:
     global current_match_id
-
     match = get_match_by_id(match_id)
     if not match:
-        return "❌ Няма мач с такъв ID."
-
+        return f"❌ Няма мач с ID {match_id}."
     current_match_id = match_id
-    return f"✅ Избран мач #{match_id}"
+    return f"✅ Избран мач #{match_id}: {match[1]} vs {match[2]}"
 
 
 def get_current_match():
-    if not current_match_id:
+    """Връща row за текущия мач или None."""
+    if current_match_id is None:
         return None
     return get_match_by_id(current_match_id)
 
 
 # =========================
-# ROUND MATCHES
+# ПРЕГЛЕД НА КРЪГ
 # =========================
-from repositories.matches_repo import get_matches_by_round
-from repositories.leagues_repo import get_league_by_name_and_season
-
-
-def show_round(league_name: str, season: str, round_no: int):
+def show_round(league_name: str, season: str, round_no: int) -> str:
     league = get_league_by_name_and_season(league_name, season)
-
     if not league:
-        return "❌ Лигата не съществува."
+        return f"❌ Лигата '{league_name}' ({season}) не съществува."
 
     league_id = league[0]
-
     matches = get_matches_by_round(league_id, round_no)
-
     if not matches:
-        return f"❌ Няма мачове за кръг {round_no}."
+        return f"❌ Няма мачове за кръг {round_no} в {league_name} ({season})."
 
-    result = f"📅 Кръг {round_no} - {league_name} ({season})\n\n"
-
+    result = f"📅 Кръг {round_no} – {league_name} ({season})\n\n"
     for m in matches:
-        match_id = m[0]
-        home = m[1]
-        away = m[2]
-        home_goals = m[3]
-        away_goals = m[4]
-        status = m[5]
-
-        if home_goals is None or away_goals is None:
-            score = "⏳ неигран"
-        else:
-            score = f"{home_goals}:{away_goals}"
-
-        result += f"🆔 {match_id} | {home} vs {away} с| {score} | {status}\n"
-
+        match_id, home, away, home_goals, away_goals, status = m
+        score = f"{home_goals}:{away_goals}" if home_goals is not None else "⏳ неигран"
+        result += f"🆔 {match_id} | {home} – {away} | {score} | {status}\n"
     return result
 
 
 # =========================
-# RESULT LOGIC
+# ЗАПИС НА РЕЗУЛТАТ
 # =========================
-def set_result(home, away, home_goals, away_goals):
+def set_result(home: str, away: str, home_goals: int, away_goals: int) -> str:
     match = get_current_match()
-
     if not match:
-        return "❌ Няма избран мач."
+        return "❌ Не е избран мач. Използвай: Избери мач <ID>"
 
-    match_id = current_match_id
-    
-    if not current_match_id:
-        return "❌ Не е избран мач."
-    
-    # проверка дали вече има резултат
-    if match[3] is not None or match[4] is not None:
-        return "❌ Този мач вече има въведен резултат."
+    match_id   = match[0]
+    home_team  = match[1]
+    away_team  = match[2]
+    old_home_g = match[3]
+    old_away_g = match[4]
+    status     = match[5]
+
+    # Проверка дали подадените отбори съвпадат с мача
+    if home.lower() != home_team.lower() or away.lower() != away_team.lower():
+        return (
+            f"❌ Отборите не съвпадат с избрания мач #{match_id} "
+            f"({home_team} – {away_team}).\n"
+            f"   Провери с: Покажи кръг или смени мача с: Избери мач <ID>"
+        )
+
+    # Вече записан резултат
+    if status == "played":
+        return (
+            f"❌ Мач #{match_id} вече има резултат "
+            f"{old_home_g}:{old_away_g}. "
+            f"Редакция не е позволена."
+        )
 
     update_match_score(match_id, home_goals, away_goals)
-
-    return f"✅ Записано: {home}-{away} {home_goals}:{away_goals} (мач #{match_id})"
-
-
-# =========================
-# VALIDATION HELPERS
-# =========================
-def _validate_minute(minute: int):
-    return 1 <= minute <= 120
-
-
-def _get_player(player_id: int):
-    query = "SELECT player_id, full_name, club_id FROM Players WHERE player_id = ?"
-    res = execute_query(query, (player_id,), fetch=True)
-    return res[0] if res else None
+    return f"✅ Записано: {home_team}–{away_team} {home_goals}:{away_goals} (мач #{match_id})"
 
 
 # =========================
-# GOALS
+# ГОЛОВЕ
 # =========================
-def add_goal(player_name, club_name, minute):
-    # 1. validate minute
-    if minute < 1 or minute > 120:
-        return "❌ Невалидна минута (1–120)."
+def add_goal(player_name: str, club_name: str, minute: int) -> str:
+    # 1. Валидна минута
+    if not (1 <= minute <= 120):
+        return f"❌ Невалидна минута {minute}. Трябва да е между 1 и 120."
 
-    # 2. взимаме player + club
-    player = execute_query("""
-        SELECT player_id, club_id, full_name
-        FROM Players
-        WHERE LOWER(full_name) = LOWER(?)
-    """, (f"%{player_name}%",), fetch=True)
-
-    if not player:
-        return "❌ Играчът не съществува."
-
-    player_id, player_club_id, _ = player[0]
-
-    club = execute_query("""
-        SELECT club_id FROM Clubs
-        WHERE LOWER(name) LIKE LOWER(?)
-    """, (f"%{club_name}%",), fetch=True)
-
-    if not club:
-        return "❌ Отборът не съществува."
-
-    club_id = club[0][0]
-
-    # 3. проверка дали играчът е от отбора
-    if player_club_id != club_id:
-        return "❌ Играчът не е в този отбор."
-
-    # 4. запис
-    insert_goal(match_id=current_match_id, player_id=player_id, club_id=club_id, minute=minute)
-    if not current_match_id:
-        return "❌ Не е избран мач."
-
-    return f"⚽ Гол записан: {player_name} ({club_name}) {minute}'"
-
-
-# =========================
-# CARDS
-# =========================
-def add_card(player_id: int, card_type: str, minute: int):
+    # 2. Текущ мач
     match = get_current_match()
-
     if not match:
-        return "❌ Няма избран мач."
+        return "❌ Не е избран мач. Използвай: Избери мач <ID>"
 
-    if not _validate_minute(minute):
-        return "❌ Невалидна минута (1–120)."
+    match_id     = match[0]
+    home_club_id = match[6]
+    away_club_id = match[7]
 
-    if card_type not in ["Y", "R"]:
-        return "❌ Карта трябва да е Y или R."
+    # 3. Намери играча (LIKE за частично съвпадение на имена)
+    players = execute_query(
+        "SELECT player_id, club_id, full_name FROM Players "
+        "WHERE LOWER(full_name) LIKE LOWER(?)",
+        (f"%{player_name}%",),
+        fetch=True,
+    )
+    if not players:
+        return f"❌ Играч '{player_name}' не е намерен."
+    if len(players) > 1:
+        names = ", ".join(p[2] for p in players)
+        return f"❌ Намерени няколко играча: {names}. Уточни пълното име."
 
-    player = _get_player(player_id)
-    if not player:
-        return "❌ Играчът не съществува."
+    player_id, player_club_id, full_name = players[0]
 
-    home_team = match[1]
-    away_team = match[2]
+    # 4. Намери клуба
+    clubs = execute_query(
+        "SELECT club_id, name FROM Clubs WHERE LOWER(name) LIKE LOWER(?)",
+        (f"%{club_name}%",),
+        fetch=True,
+    )
+    if not clubs:
+        return f"❌ Отбор '{club_name}' не е намерен."
+    if len(clubs) > 1:
+        names = ", ".join(c[1] for c in clubs)
+        return f"❌ Намерени няколко отбора: {names}. Уточни."
 
-    if player[2] not in (home_team, away_team):
-        return "❌ Играчът не е от участващите отбори."
+    club_id, club_full_name = clubs[0]
 
-    insert_card(match[0], player_id, minute, card_type)
+    # 5. Играчът принадлежи ли на посочения отбор?
+    if player_club_id != club_id:
+        return f"❌ {full_name} не е играч на {club_full_name}."
 
-    return f"🟨🟥 Картон записан (играч #{player_id}, {card_type})"
+    # 6. Отборът участва ли в мача?
+    if club_id not in (home_club_id, away_club_id):
+        return f"❌ {club_full_name} не участва в мач #{match_id}."
+
+    # 7. Запис
+    insert_goal(match_id, player_id, club_id, minute)
+    return f"⚽ Гол записан: {full_name} ({club_full_name}) {minute}'"
 
 
 # =========================
-# EVENTS
+# КАРТОНИ
 # =========================
-def show_events(match_id=None):
-    if not match_id:
+def add_card(player_name: str, club_name: str, card_type: str, minute: int) -> str:
+    # 1. Тип картон
+    card_type = card_type.upper()
+    if card_type not in ("Y", "R"):
+        return "❌ Картонът трябва да е Y (жълт) или R (червен)."
+
+    # 2. Валидна минута
+    if not (1 <= minute <= 120):
+        return f"❌ Невалидна минута {minute}. Трябва да е между 1 и 120."
+
+    # 3. Текущ мач
+    match = get_current_match()
+    if not match:
+        return "❌ Не е избран мач. Използвай: Избери мач <ID>"
+
+    match_id     = match[0]
+    home_club_id = match[6]
+    away_club_id = match[7]
+
+    # 4. Намери играча
+    players = execute_query(
+        "SELECT player_id, club_id, full_name FROM Players "
+        "WHERE LOWER(full_name) LIKE LOWER(?)",
+        (f"%{player_name}%",),
+        fetch=True,
+    )
+    if not players:
+        return f"❌ Играч '{player_name}' не е намерен."
+    if len(players) > 1:
+        names = ", ".join(p[2] for p in players)
+        return f"❌ Намерени няколко играча: {names}. Уточни пълното ime."
+
+    player_id, player_club_id, full_name = players[0]
+
+    # 5. Намери клуба
+    clubs = execute_query(
+        "SELECT club_id, name FROM Clubs WHERE LOWER(name) LIKE LOWER(?)",
+        (f"%{club_name}%",),
+        fetch=True,
+    )
+    if not clubs:
+        return f"❌ Отбор '{club_name}' не е намерен."
+    if len(clubs) > 1:
+        names = ", ".join(c[1] for c in clubs)
+        return f"❌ Намерени няколко отбора: {names}. Уточни."
+
+    club_id, club_full_name = clubs[0]
+
+    # 6. Играчът принадлежи ли на посочения отбор?
+    if player_club_id != club_id:
+        return f"❌ {full_name} не е играч на {club_full_name}."
+
+    # 7. Отборът участва ли в мача?
+    if club_id not in (home_club_id, away_club_id):
+        return f"❌ {club_full_name} не участва в мач #{match_id}."
+
+    # 8. Запис
+    insert_card(match_id, player_id, club_id, minute, card_type)
+    emoji = "🟨" if card_type == "Y" else "🟥"
+    return f"{emoji} Картон записан: {full_name} ({club_full_name}) {card_type} {minute}'"
+
+
+# =========================
+# ПРЕГЛЕД НА СЪБИТИЯ
+# =========================
+def show_events(match_id: int = None) -> str:
+    # Ако не е подаден ID → ползваме текущия
+    if match_id is None:
         match = get_current_match()
         if not match:
-            return "❌ Няма избран мач."
+            return (
+                "❌ Не е избран мач. Използвай: Избери мач <ID> "
+                "или: Покажи събития <match_id>"
+            )
         match_id = match[0]
+    else:
+        match = get_match_by_id(match_id)
+        if not match:
+            return f"❌ Няма мач с ID {match_id}."
 
-    goals = get_goals(match_id)
-    cards = get_cards(match_id)
+    home       = match[1]
+    away       = match[2]
+    home_goals = match[3]
+    away_goals = match[4]
+    score_str  = f"{home_goals}:{away_goals}" if home_goals is not None else "– : –"
 
-    result = f"📊 Събития за мач #{match_id}\n\n"
+    output  = f"📊 Мач #{match_id}: {home} – {away} | {score_str}\n"
+    output += "─" * 42 + "\n"
 
-    result += "⚽ Голове:\n"
+    goals = get_goals(match_id)    # (minute, full_name, club_name)
+    cards = get_cards(match_id)    # (minute, full_name, card_type, club_name)
+
+    # Обединяваме и сортираме по минута
+    events = []
     for g in goals:
-        result += f"{g[0]} мин - {g[1]} ({g[2]})\n"
-
-    result += "\n🟨🟥 Картони:\n"
+        events.append((g[0], "⚽", g[1], g[2]))
     for c in cards:
-        result += f"{c[0]} мин - {c[1]} ({c[2]})\n"
+        emoji = "🟨" if c[2] == "Y" else "🟥"
+        events.append((c[0], emoji, c[1], c[3]))
 
-    return result
+    events.sort(key=lambda x: x[0])
+
+    if not events:
+        output += "Няма записани събития.\n"
+    else:
+        for minute, icon, name, club in events:
+            output += f"{minute:>3}' {icon}  {name} ({club})\n"
+
+    return output
