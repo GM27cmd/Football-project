@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS Transfers (
     from_club_id INTEGER,
     to_club_id INTEGER NOT NULL,
     transfer_date TEXT NOT NULL,
-    fee REAL DEFAULT NULL,       -- сумата е optional
-    note TEXT DEFAULT NULL,      -- забележка е optional
+    fee REAL DEFAULT NULL,
+    note TEXT DEFAULT NULL,
     FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
     FOREIGN KEY (from_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
     FOREIGN KEY (to_club_id) REFERENCES Clubs(club_id) ON DELETE SET NULL,
@@ -78,23 +78,30 @@ CREATE TABLE Matches (
 );
 
 -- Голове
+-- club_id: удобно за проверки/статистика (може да се изведе от player, но е по-бързо)
 CREATE TABLE Goals (
     goal_id INTEGER PRIMARY KEY AUTOINCREMENT,
     match_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
-    minute INTEGER NOT NULL,
-    type TEXT,
+    club_id INTEGER NOT NULL,
+    minute INTEGER NOT NULL CHECK(minute BETWEEN 1 AND 120),
+    is_own_goal INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (match_id) REFERENCES Matches(match_id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE
+    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
 );
 
 -- Картони
+-- card_type: Y (жълт) или R (червен)
 CREATE TABLE Cards (
     card_id INTEGER PRIMARY KEY AUTOINCREMENT,
     match_id INTEGER NOT NULL,
     player_id INTEGER NOT NULL,
-    type TEXT NOT NULL,
-    minute INTEGER NOT NULL,
+    club_id INTEGER NOT NULL,
+    minute INTEGER NOT NULL CHECK(minute BETWEEN 1 AND 120),
+    card_type TEXT NOT NULL CHECK(card_type IN ('Y', 'R')),
     FOREIGN KEY (match_id) REFERENCES Matches(match_id) ON DELETE CASCADE,
-    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE
+    FOREIGN KEY (player_id) REFERENCES Players(player_id) ON DELETE CASCADE,
+    FOREIGN KEY (club_id) REFERENCES Clubs(club_id) ON DELETE CASCADE
 );
