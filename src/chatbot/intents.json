@@ -98,5 +98,21 @@
   {
     "tag": "show_standings",
     "regex": "покажи класиране"
+  },
+  {
+    "tag": "predict_match",
+    "regex": "прогноза.+срещу"
+  },
+  {
+    "tag": "rename_club",
+    "regex": "преименувай клуб"
+  },
+  {
+    "tag": "rename_player",
+    "regex": "преименувай играч"
+  },
+  {
+    "tag": "rename_league",
+    "regex": "преименувай лига"
   }
 ]
