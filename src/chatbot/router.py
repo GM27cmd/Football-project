@@ -36,6 +36,12 @@ from chatbot.handlers_rename import (
     handle_rename_league,
 )
 
+from chatbot.handlers_stats import (
+    handle_top_scorers,
+    handle_discipline,
+    handle_team_scoring,
+)
+
 # ✅ Класиране 
 from chatbot.handlers_standings import handle_show_standings
 
@@ -233,6 +239,16 @@ def route_intent(intent, user_input):
     if intent == "rename_league":
         return handle_rename_league(user_input)
     
+    # ─── СТАТИСТИКА (Модул G) ────────────────────────────
+    if intent == "top_scorers":
+        return handle_top_scorers(user_input)
+ 
+    if intent == "discipline":
+        return handle_discipline(user_input)
+ 
+    if intent == "team_scoring":
+        return handle_team_scoring(user_input)
+
     # ─── SYSTEM ──────────────────────────────────────────
     if intent == "help":
         return show_help()
