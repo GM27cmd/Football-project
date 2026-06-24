@@ -57,41 +57,65 @@ def route_intent(intent, user_input):
 
     # ─── CLUBS ───────────────────────────────────────────
     if intent == "add_club":
-        m = re.search(r"добави клуб\s+(.+)", user_input, re.IGNORECASE)
+        # Формати:
+        #   Добави клуб Спортист
+        #   Добави клуб Спортист в София
+        #   Добави клуб Спортист в София основан 2000
+        m = re.search(
+            r"добави клуб\s+(.+?)(?:\s+в\s+([^0-9]+?))?(?:\s+основан\s+(\d{4}))?\s*$",
+            user_input, re.IGNORECASE
+        )
         if m:
-            result = add_club(m.group(1).strip())
-            log_command(user_input, intent, params={"club": m.group(1).strip()}, result=result)
+            name         = m.group(1).strip()
+            city         = m.group(2).strip() if m.group(2) else None
+            founded_year = int(m.group(3)) if m.group(3) else None
+            result = add_club(name, city, founded_year)
+            log_command(user_input, intent,
+                        params={"club": name, "city": city, "year": founded_year},
+                        result=result)
             return result
-
+ 
     if intent == "list_clubs":
         result = get_all_clubs()
         log_command(user_input, intent, result=result)
         return result
-
+ 
     if intent == "delete_club":
         m = re.search(r"изтрий клуб\s+(.+)", user_input, re.IGNORECASE)
         if m:
             result = delete_club(m.group(1).strip())
-            log_command(user_input, intent, params={"club": m.group(1).strip()}, result=result)
+            log_command(user_input, intent,
+                        params={"club": m.group(1).strip()}, result=result)
             return result
 
     # ─── PLAYERS ─────────────────────────────────────────
     if intent == "add_player":
+        # Regex приема ВСЯКАКВА позиция (не само GK|DF|MF|FW)
+        # Валидацията и нормализирането стават в players_service.py
         m = re.search(
-            r"добави играч\s+(.+?)\s+в\s+(.+?)\s+позиция\s+(GK|DF|MF|FW)"
+            r"добави играч\s+(.+?)\s+в\s+(.+?)\s+позиция\s+(\S+)"
             r"\s+номер\s+(\d+)\s+роден\s+(\d{4}-\d{2}-\d{2})\s+националност\s+(.+)",
             user_input, re.IGNORECASE,
         )
         if m:
             full_name   = m.group(1).strip()
             club_name   = m.group(2).strip()
-            position    = m.group(3).upper()
+            position    = m.group(3).upper()   # (\S+) — каквото и да е
             number      = int(m.group(4))
             birth_date  = m.group(5).strip()
             nationality = m.group(6).strip()
-            result = add_player(full_name, birth_date, nationality, position, number, club_name)
-            log_command(user_input, intent, params={"player": full_name, "club": club_name}, result=result)
+            result = add_player(full_name, birth_date, nationality,
+                                position, number, club_name)
+            log_command(user_input, intent,
+                        params={"player": full_name, "club": club_name,
+                                "position": position},
+                        result=result)
             return result
+        return (
+            "❌ Грешен формат. Пример:\n"
+            "   Добави играч Иван Петров в Левски позиция FW номер 9 "
+            "роден 2000-01-01 националност България"
+        )
 
     if intent == "list_players":
         m = re.search(r"покажи играчи на\s+(.+)", user_input, re.IGNORECASE)
