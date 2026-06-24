@@ -76,8 +76,12 @@
     "regex": "избери мач"
   },
   {
+    "tag": "top_scorers",
+    "regex": "покажи голмайстори"
+  },
+  {
     "tag": "add_goal",
-    "regex": "гол"
+    "regex": "^гол\\s"
   },
   {
     "tag": "set_result",
@@ -98,6 +102,14 @@
   {
     "tag": "show_standings",
     "regex": "покажи класиране"
+  },
+  {
+    "tag": "discipline",
+    "regex": "покажи дисциплина"
+  },
+  {
+    "tag": "team_scoring",
+    "regex": "покажи резултатност"
   },
   {
     "tag": "predict_match",
